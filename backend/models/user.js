@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     userManager:{
-        type: Date,
+        type: String,
         required: true
     },
     project:{

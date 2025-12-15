@@ -2,7 +2,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/admin");
 
-// REGISTER ADMIN
+const generateToken = (adminId) =>
+    jwt.sign({ adminId }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+// REGISTER
 exports.registerAdmin = async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -12,7 +15,9 @@ exports.registerAdmin = async (req, res) => {
             return res.status(400).json({ msg: "Admin already exists" });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // 🔐 bcrypt hashing
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         const admin = new Admin({
             name,
@@ -22,16 +27,18 @@ exports.registerAdmin = async (req, res) => {
 
         await admin.save();
 
+        const token = generateToken(admin._id);
+
         res.status(201).json({
             msg: "Admin registered successfully",
+            token,
         });
-    } catch (error) {
-        console.error(error.message);
+    } catch (err) {
         res.status(500).json({ msg: "Server Error" });
     }
 };
 
-// LOGIN ADMIN
+// LOGIN
 exports.loginAdmin = async (req, res) => {
     const { email, password } = req.body;
 
@@ -41,16 +48,19 @@ exports.loginAdmin = async (req, res) => {
             return res.status(400).json({ msg: "Invalid credentials" });
         }
 
+        // 🔐 bcrypt compare
         const isMatch = await bcrypt.compare(password, admin.password);
         if (!isMatch) {
             return res.status(400).json({ msg: "Invalid credentials" });
         }
 
+        const token = generateToken(admin._id);
+
         res.status(200).json({
             msg: "Login successful",
+            token,
         });
-    } catch (error) {
-        console.error(error.message);
+    } catch (err) {
         res.status(500).json({ msg: "Server Error" });
     }
 };

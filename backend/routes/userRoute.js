@@ -13,6 +13,7 @@ const {
 const adminAuth = require("../middleware/adminAuth");
 const upload = require("../middleware/upload");
 
+
 // Create user
 router.post("/add", adminAuth, createUser);
 

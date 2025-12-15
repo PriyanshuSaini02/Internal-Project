@@ -1,47 +1,51 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 const Admin = require("../models/admin");
 const { sendPasswordResetEmail } = require("../utils/emailService");
 
-const generateToken = (adminId) =>
+// ================= JWT HELPERS =================
+const generateAuthToken = (adminId) =>
     jwt.sign({ adminId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
-// REGISTER
+const generateResetToken = (adminId) =>
+    jwt.sign(
+        { adminId, purpose: "password_reset" },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+    );
+
+
+// ================= REGISTER =================
 exports.registerAdmin = async (req, res) => {
     const { name, email, password } = req.body;
 
     try {
-        const existingAdmin = await Admin.findOne({ email });
-        if (existingAdmin) {
+        const exists = await Admin.findOne({ email });
+        if (exists) {
             return res.status(400).json({ msg: "Admin already exists" });
         }
 
-        // 🔐 bcrypt hashing
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashed = await bcrypt.hash(password, 10);
 
-        const admin = new Admin({
+        const admin = await Admin.create({
             name,
             email,
-            password: hashedPassword,
+            password: hashed
         });
 
-        await admin.save();
-
-        const token = generateToken(admin._id);
+        const token = generateAuthToken(admin._id);
 
         res.status(201).json({
             msg: "Admin registered successfully",
-            token,
+            token
         });
     } catch (err) {
-        console.error('Error registering admin:', err);
         res.status(500).json({ msg: "Server Error" });
     }
 };
 
-// LOGIN
+
+// ================= LOGIN =================
 exports.loginAdmin = async (req, res) => {
     const { email, password } = req.body;
 
@@ -51,15 +55,14 @@ exports.loginAdmin = async (req, res) => {
             return res.status(400).json({ msg: "Invalid credentials" });
         }
 
-        // 🔐 bcrypt compare
-        const isMatch = await bcrypt.compare(password, admin.password);
-        if (!isMatch) {
+        const match = await bcrypt.compare(password, admin.password);
+        if (!match) {
             return res.status(400).json({ msg: "Invalid credentials" });
         }
 
-        const token = generateToken(admin._id);
+        const token = generateAuthToken(admin._id);
 
-        res.status(200).json({
+        res.json({
             msg: "Login successful",
             token,
             admin: {
@@ -69,101 +72,70 @@ exports.loginAdmin = async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Error logging in admin:', err);
         res.status(500).json({ msg: "Server Error" });
     }
 };
 
-// FORGOT PASSWORD
+
+// ================= FORGOT PASSWORD =================
 exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
 
     try {
         const admin = await Admin.findOne({ email });
         if (!admin) {
-            return res.status(404).json({ msg: "Admin not found with this email" });
+            return res.status(404).json({ msg: "Admin not found" });
         }
 
-        // Generate reset token
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenExpiry = Date.now() + 3600000; // 1 hour
+        // JWT reset token (1 hour expiry)
+        const resetToken = generateResetToken(admin._id);
 
-        // Save reset token to admin
-        admin.resetPasswordToken = resetToken;
-        admin.resetPasswordExpires = resetTokenExpiry;
-        await admin.save();
+        await sendPasswordResetEmail(admin.email, admin.name, resetToken);
 
-        // Send email
-        const emailSent = await sendPasswordResetEmail(admin.email, admin.name, resetToken);
-
-        if (emailSent) {
-            res.status(200).json({
-                msg: "Password reset email sent successfully"
-            });
-        } else {
-            res.status(500).json({
-                msg: "Error sending password reset email"
-            });
-        }
+        res.json({ msg: "Password reset email sent" });
     } catch (err) {
-        console.error('Error in forgot password:', err);
         res.status(500).json({ msg: "Server Error" });
     }
 };
 
-// RESET PASSWORD
-exports.resetPassword = async (req, res) => {
-    const { token, newPassword } = req.body;
 
-    try {
-        const admin = await Admin.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
-
-        if (!admin) {
-            return res.status(400).json({ msg: "Invalid or expired reset token" });
-        }
-
-        // Hash new password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-        // Update password and clear reset token
-        admin.password = hashedPassword;
-        admin.resetPasswordToken = null;
-        admin.resetPasswordExpires = null;
-        await admin.save();
-
-        res.status(200).json({
-            msg: "Password reset successfully"
-        });
-    } catch (err) {
-        console.error('Error resetting password:', err);
-        res.status(500).json({ msg: "Server Error" });
-    }
-};
-
-// VERIFY RESET TOKEN
+// ================= VERIFY RESET TOKEN =================
 exports.verifyResetToken = async (req, res) => {
     const { token } = req.params;
 
     try {
-        const admin = await Admin.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        if (!admin) {
-            return res.status(400).json({ msg: "Invalid or expired reset token" });
+        if (decoded.purpose !== "password_reset") {
+            return res.status(400).json({ msg: "Invalid token" });
         }
 
-        res.status(200).json({
-            msg: "Token is valid",
-            adminEmail: admin.email
-        });
+        res.json({ msg: "Token is valid" });
     } catch (err) {
-        console.error('Error verifying reset token:', err);
-        res.status(500).json({ msg: "Server Error" });
+        res.status(400).json({ msg: "Invalid or expired token" });
+    }
+};
+
+
+// ================= RESET PASSWORD =================
+exports.resetPassword = async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (decoded.purpose !== "password_reset") {
+            return res.status(400).json({ msg: "Invalid token" });
+        }
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+
+        await Admin.findByIdAndUpdate(decoded.adminId, {
+            password: hashed
+        });
+
+        res.json({ msg: "Password reset successful" });
+    } catch (err) {
+        res.status(400).json({ msg: "Invalid or expired token" });
     }
 };

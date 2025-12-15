@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    userId:{
+    userId: {
         type: String,
         required: true,
         unique: true
@@ -27,22 +27,28 @@ const userSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
-    userManager:{
+    userManager: {
         type: String,
         required: true
     },
-    project:{
-        type: [String], 
+    project: {
+        type: [String],
         required: true
     },
-    address:{
-        type:String,
-        required: true
-    },
-    phoneNumber:{
+    address: {
         type: String,
         required: true
+    },
+    phoneNumber: {
+        type: String,
+        required: true
+    },
+    profilePicture: {
+        type: String,
+        default: null // Store file path or URL
     }
+}, {
+    timestamps: true
 });
 
 module.exports = mongoose.model('user', userSchema);

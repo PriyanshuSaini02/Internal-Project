@@ -50,7 +50,7 @@ const sendUserCredentials = async (userEmail, userName, password) => {
 const sendPasswordResetEmail = async (adminEmail, adminName, resetToken) => {
     const transporter = createTransporter();
 
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`;
 
     const mailOptions = {
         from: `"Snabbtech" <${process.env.EMAIL_USER}>`,

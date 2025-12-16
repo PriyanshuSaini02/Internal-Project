@@ -249,12 +249,6 @@ curl http://localhost:5000/api/admin/login
 # Check VITE_API_URL in .env
 ```
 
-**Build Errors**
-```bash
-# Clear cache and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
 
 ### Email Issues
 **Gmail Authentication**

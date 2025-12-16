@@ -2,8 +2,8 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const User = require("../models/user");
 const { sendUserCredentials } = require("../utils/emailService");
-const path = require('path');
-const fs = require('fs');
+const { v2: cloudinary } = require('cloudinary');
+const streamifier = require('streamifier');
 
 exports.createUser = async (req, res) => {
     const {
@@ -147,11 +147,15 @@ exports.deleteUser = async (req, res) => {
             return res.status(404).json({ msg: "User not found" });
         }
 
-        // Delete profile picture if exists
+        // Delete profile picture if exists (Cloudinary)
         if (user.profilePicture) {
-            const imagePath = path.join(__dirname, '../uploads/profiles', path.basename(user.profilePicture));
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+            const publicId = extractPublicId(user.profilePicture);
+            if (publicId) {
+                try {
+                    await cloudinary.uploader.destroy(publicId);
+                } catch (err) {
+                    console.warn('Failed to delete existing Cloudinary image', err.message);
+                }
             }
         }
 
@@ -178,22 +182,27 @@ exports.uploadProfilePicture = async (req, res) => {
             return res.status(404).json({ msg: "User not found" });
         }
 
+        // Upload to Cloudinary
+        const uploadResult = await uploadToCloudinary(req.file.buffer);
+
         // Delete old profile picture if exists
         if (user.profilePicture) {
-            const oldImagePath = path.join(__dirname, '../uploads/profiles', path.basename(user.profilePicture));
-            if (fs.existsSync(oldImagePath)) {
-                fs.unlinkSync(oldImagePath);
+            const oldPublicId = extractPublicId(user.profilePicture);
+            if (oldPublicId) {
+                try {
+                    await cloudinary.uploader.destroy(oldPublicId);
+                } catch (err) {
+                    console.warn('Failed to delete old Cloudinary image', err.message);
+                }
             }
         }
 
-        // Update user with new profile picture path
-        const profilePicturePath = `/uploads/profiles/${req.file.filename}`;
-        user.profilePicture = profilePicturePath;
+        user.profilePicture = uploadResult.secure_url;
         await user.save();
 
         res.status(200).json({
             msg: "Profile picture uploaded successfully",
-            profilePicture: profilePicturePath
+            profilePicture: uploadResult.secure_url
         });
     } catch (err) {
         console.error('Error uploading profile picture:', err);
@@ -209,14 +218,54 @@ exports.getProfilePicture = async (req, res) => {
             return res.status(404).json({ msg: "Profile picture not found" });
         }
 
-        const imagePath = path.join(__dirname, '../uploads/profiles', path.basename(user.profilePicture));
-        if (!fs.existsSync(imagePath)) {
-            return res.status(404).json({ msg: "Profile picture file not found" });
+        // If stored URL, redirect to it
+        if (user.profilePicture.startsWith('http')) {
+            return res.redirect(user.profilePicture);
         }
 
-        res.sendFile(imagePath);
+        return res.status(404).json({ msg: "Profile picture not found" });
     } catch (err) {
         console.error('Error getting profile picture:', err);
         res.status(500).json({ msg: "Server Error" });
     }
+};
+
+// Helpers
+const ensureCloudinaryConfig = () => {
+    const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = process.env;
+    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+        throw new Error('Cloudinary environment variables are missing');
+    }
+    cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET,
+    });
+};
+
+const uploadToCloudinary = (buffer) =>
+    new Promise((resolve, reject) => {
+        try {
+            ensureCloudinaryConfig();
+            const stream = cloudinary.uploader.upload_stream(
+                { folder: 'snabbtech/profiles' },
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                }
+            );
+            streamifier.createReadStream(buffer).pipe(stream);
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+const extractPublicId = (url) => {
+    if (!url || !url.includes('/upload/')) return null;
+    const parts = url.split('/upload/');
+    if (parts.length < 2) return null;
+    const remainder = parts[1];
+    const [pathWithExt] = remainder.split('?'); // strip query if any
+    const withoutExt = pathWithExt.replace(/\.[^/.]+$/, ''); // remove extension
+    return withoutExt;
 };

@@ -23,6 +23,9 @@ EMAIL_PASSWORD=your_smtp_pass
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 FRONTEND_URL=http://localhost:3000   # used for password reset links
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_cloud_api_key
+CLOUDINARY_API_SECRET=your_cloud_api_secret
 ```
 
 ## API Base

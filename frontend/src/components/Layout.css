@@ -1,13 +1,19 @@
 /* ================= APP SHELL ================= */
 .app-shell {
-  display: flex;
   min-height: 100vh;
   background: #f8fafc;
+  position: relative;
 }
 
-/* ================= SIDEBAR ================= */
+/* ================= SIDEBAR (OVERLAY) ================= */
 .sidebar {
+  position: fixed;
+  /* 🔑 overlay */
+  top: 0;
+  left: 0;
+  height: 100vh;
   width: 72px;
+  /* collapsed width */
   background: #020617;
   display: flex;
   flex-direction: column;
@@ -17,10 +23,12 @@
   overflow: hidden;
   box-shadow: 4px 0 20px rgba(15, 23, 42, 0.4);
   color: #e2e8f0;
+  z-index: 1000;
 }
 
 .sidebar:hover {
   width: 260px;
+  /* expands over content */
   align-items: stretch;
 }
 
@@ -130,7 +138,7 @@
   padding-left: 16px;
 }
 
-/* ================= AVATAR (POLISHED) ================= */
+/* ================= AVATAR ================= */
 .avatar {
   width: 40px;
   height: 40px;
@@ -165,12 +173,10 @@
   cursor: pointer;
 }
 
-/* Hide text when collapsed */
 .btn-logout span {
   display: none;
 }
 
-/* Expanded logout */
 .sidebar:hover .btn-logout {
   width: auto;
   padding: 0 16px;
@@ -186,7 +192,9 @@
 
 /* ================= CONTENT ================= */
 .app-content {
-  flex: 1;
   padding: 28px;
+  padding-left: 100px;
+  /* space for collapsed sidebar */
   background: #f8fafc;
+  min-height: 100vh;
 }

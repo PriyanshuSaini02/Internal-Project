@@ -14,8 +14,8 @@ const SidebarLayout = ({ children }) => {
 
   return (
     <div className="app-shell">
+      {/* SIDEBAR OVERLAY */}
       <aside className="sidebar">
-        {/* Brand */}
         <div className="sidebar__brand">
           <div className="sidebar__logo">S</div>
           <div className="brand-text">
@@ -24,7 +24,6 @@ const SidebarLayout = ({ children }) => {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="sidebar__nav">
           <NavLink to="/home" className="sidebar__link">
             <Home />
@@ -42,7 +41,6 @@ const SidebarLayout = ({ children }) => {
           </NavLink>
         </nav>
 
-        {/* Footer */}
         <div className="sidebar__footer">
           <div className="sidebar__user">
             <div className="avatar">
@@ -58,14 +56,17 @@ const SidebarLayout = ({ children }) => {
             </div>
           </div>
 
-          <button className="btn-logout full" onClick={handleLogout}>
+          <button className="btn-logout" onClick={handleLogout}>
             <LogOut size={18} />
             <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      <main className="app-content">{children}</main>
+      {/* CONTENT */}
+      <main className="app-content">
+        {children}
+      </main>
     </div>
   );
 };

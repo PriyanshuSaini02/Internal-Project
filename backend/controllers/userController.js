@@ -22,7 +22,13 @@ exports.createUser = async (req, res) => {
         }
 
         // UUIDs without external lib
-        const userId = crypto.randomUUID();
+        function generateUserId() {
+            const random = Math.floor(100000 + Math.random() * 900000);
+            return `EM-${random}`;
+        }
+
+        const userId = generateUserId();
+
         const rawPassword = crypto.randomUUID().slice(0, 8);
 
         const hashedPassword = await bcrypt.hash(rawPassword, 10);

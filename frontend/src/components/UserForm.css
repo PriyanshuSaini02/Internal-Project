@@ -1,7 +1,8 @@
 .user-form-container {
-  min-height: 100vh;
+  min-height: 100%;
   background: #f8fafc;
   padding: 30px 20px;
+  box-sizing: border-box;
 }
 
 .user-form-card {
@@ -14,6 +15,7 @@
   border: 1px solid #e5e7eb;
 }
 
+/* ================= HEADER ================= */
 .form-header {
   display: flex;
   justify-content: space-between;
@@ -30,6 +32,44 @@
   letter-spacing: -0.3px;
 }
 
+/* ================= PROFILE UPLOAD ================= */
+.profile-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px dashed #c7d2fe;
+}
+
+.profile-preview {
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+}
+
+.profile-preview img,
+.profile-placeholder {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.profile-placeholder {
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  padding: 10px;
+}
+
+/* ================= FORM ================= */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -74,6 +114,7 @@
   min-height: 90px;
 }
 
+/* ================= ACTIONS ================= */
 .form-actions {
   display: flex;
   gap: 12px;
@@ -81,6 +122,7 @@
   margin-top: 20px;
 }
 
+/* ================= BUTTONS ================= */
 .btn-primary {
   padding: 12px 22px;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
@@ -122,6 +164,7 @@
   transform: translateY(-1px);
 }
 
+/* ================= STATES ================= */
 .loading {
   text-align: center;
   padding: 40px;
@@ -129,9 +172,15 @@
   font-size: 16px;
 }
 
+/* ================= MOBILE ================= */
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .profile-upload-section {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .form-actions {
@@ -142,4 +191,3 @@
     width: 100%;
   }
 }
-

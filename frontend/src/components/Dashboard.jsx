@@ -11,7 +11,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const { logout, admin } = useAuth();
+  const { admin } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,9 +32,7 @@ const Dashboard = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
 
     try {
       await userAPI.delete(userId);
@@ -63,21 +61,24 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
+      {/* HEADER */}
       <header className="dashboard-header">
         <div>
           <h1>User Management Dashboard</h1>
           <p>Welcome, {admin?.name}</p>
         </div>
+
         <div className="header-actions">
-          <button className="btn-secondary" onClick={() => navigate('/users/add')}>
+          <button
+            className="btn-secondary"
+            onClick={() => navigate('/users/add')}
+          >
             + Add User
-          </button>
-          <button className="btn-logout" onClick={logout}>
-            Logout
           </button>
         </div>
       </header>
 
+      {/* CONTENT */}
       <div className="dashboard-content">
         <div className="search-bar">
           <input
@@ -86,7 +87,11 @@ const Dashboard = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <button className="btn-secondary ghost" onClick={fetchUsers} disabled={loading}>
+          <button
+            className="btn-secondary ghost"
+            onClick={fetchUsers}
+            disabled={loading}
+          >
             Refresh
           </button>
         </div>
@@ -102,7 +107,10 @@ const Dashboard = () => {
             {filteredUsers.length === 0 ? (
               <div className="empty-state">
                 <p>No users found</p>
-                <button className="btn-primary" onClick={() => navigate('/users/add')}>
+                <button
+                  className="btn-primary"
+                  onClick={() => navigate('/users/add')}
+                >
                   Add First User
                 </button>
               </div>
@@ -130,7 +138,8 @@ const Dashboard = () => {
                             alt={user.name}
                             className="profile-thumbnail"
                             onError={(e) => {
-                              e.target.src = 'https://via.placeholder.com/40';
+                              e.target.src =
+                                'https://via.placeholder.com/40';
                             }}
                           />
                         ) : (
@@ -151,19 +160,25 @@ const Dashboard = () => {
                         <div className="action-buttons">
                           <button
                             className="btn-view"
-                            onClick={() => navigate(`/users/${user.userId}`)}
+                            onClick={() =>
+                              navigate(`/users/${user.userId}`)
+                            }
                           >
                             View
                           </button>
                           <button
                             className="btn-edit"
-                            onClick={() => navigate(`/users/${user.userId}/edit`)}
+                            onClick={() =>
+                              navigate(`/users/${user.userId}/edit`)
+                            }
                           >
                             Edit
                           </button>
                           <button
                             className="btn-delete"
-                            onClick={() => handleDelete(user.userId)}
+                            onClick={() =>
+                              handleDelete(user.userId)
+                            }
                           >
                             Delete
                           </button>
@@ -182,4 +197,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

@@ -1,0 +1,192 @@
+/* ================= APP SHELL ================= */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: 72px;
+  background: #020617;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 0;
+  transition: width 0.25s ease;
+  overflow: hidden;
+  box-shadow: 4px 0 20px rgba(15, 23, 42, 0.4);
+  color: #e2e8f0;
+}
+
+.sidebar:hover {
+  width: 260px;
+  align-items: stretch;
+}
+
+/* ================= BRAND ================= */
+.sidebar__brand {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.sidebar:hover .sidebar__brand {
+  justify-content: flex-start;
+  padding-left: 16px;
+  gap: 12px;
+}
+
+.sidebar__logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 18px;
+  color: white;
+}
+
+/* ================= NAV ================= */
+.sidebar__nav {
+  margin-top: 18px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar:hover .sidebar__nav {
+  align-items: stretch;
+}
+
+/* ================= LINKS ================= */
+.sidebar__link {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #e2e8f0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.sidebar:hover .sidebar__link {
+  width: auto;
+  justify-content: flex-start;
+  padding: 0 16px;
+}
+
+.sidebar__link:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar__link.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+/* ================= TEXT VISIBILITY ================= */
+.brand-text,
+.sidebar__link span,
+.user-text {
+  display: none;
+}
+
+.sidebar:hover .brand-text,
+.sidebar:hover .sidebar__link span,
+.sidebar:hover .user-text {
+  display: block;
+}
+
+/* ================= FOOTER ================= */
+.sidebar__footer {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar:hover .sidebar__footer {
+  align-items: stretch;
+}
+
+.sidebar__user {
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar:hover .sidebar__user {
+  justify-content: flex-start;
+  padding-left: 16px;
+}
+
+/* ================= AVATAR (POLISHED) ================= */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  box-shadow:
+    0 8px 22px rgba(99, 102, 241, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.sidebar:hover .avatar {
+  transform: scale(1.05);
+  transition: transform 0.15s ease;
+}
+
+/* ================= LOGOUT ================= */
+.btn-logout {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #ef4444;
+  border: none;
+  color: white;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+/* Hide text when collapsed */
+.btn-logout span {
+  display: none;
+}
+
+/* Expanded logout */
+.sidebar:hover .btn-logout {
+  width: auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.sidebar:hover .btn-logout span {
+  display: inline;
+}
+
+/* ================= CONTENT ================= */
+.app-content {
+  flex: 1;
+  padding: 28px;
+  background: #f8fafc;
+}

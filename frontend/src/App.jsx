@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import SidebarLayout from './components/SidebarLayout';
+import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
@@ -8,6 +10,7 @@ import ResetPassword from './components/ResetPassword';
 import Dashboard from './components/Dashboard';
 import UserForm from './components/UserForm';
 import UserDetails from './components/UserDetails';
+import Settings from './components/Settings';
 import './App.css';
 
 const AppRoutes = () => {
@@ -26,10 +29,32 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <SidebarLayout>
+              <Home />
+            </SidebarLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <SidebarLayout>
+              <Home />
+            </SidebarLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <SidebarLayout>
+              <Dashboard />
+            </SidebarLayout>
           </ProtectedRoute>
         }
       />
@@ -37,7 +62,9 @@ const AppRoutes = () => {
         path="/users/add"
         element={
           <ProtectedRoute>
-            <UserForm />
+            <SidebarLayout>
+              <UserForm />
+            </SidebarLayout>
           </ProtectedRoute>
         }
       />
@@ -45,7 +72,9 @@ const AppRoutes = () => {
         path="/users/:id"
         element={
           <ProtectedRoute>
-            <UserDetails />
+            <SidebarLayout>
+              <UserDetails />
+            </SidebarLayout>
           </ProtectedRoute>
         }
       />
@@ -53,11 +82,23 @@ const AppRoutes = () => {
         path="/users/:id/edit"
         element={
           <ProtectedRoute>
-            <UserForm />
+            <SidebarLayout>
+              <UserForm />
+            </SidebarLayout>
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SidebarLayout>
+              <Settings />
+            </SidebarLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

@@ -30,16 +30,16 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 
 // Health check endpoint
-app.get("/", (req, res) => {
-    res.json({
-        message: "Snabbtech Backend API is running!",
-        version: "1.0.0",
-        endpoints: {
-            admin: "/api/admin",
-            users: "/api/users"
-        }
-    });
-});
+// app.get("/", (req, res) => {
+//     res.json({
+//         message: "Snabbtech Backend API is running!",
+//         version: "1.0.0",
+//         endpoints: {
+//             admin: "/api/admin",
+//             users: "/api/users"
+//         }
+//     });
+// });
 
 const startServer = async () => {
     await db();

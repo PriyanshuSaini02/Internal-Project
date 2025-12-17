@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await adminAPI.logout();
+      
     } catch (error) {
       console.error("Logout error:", error);
     } finally {

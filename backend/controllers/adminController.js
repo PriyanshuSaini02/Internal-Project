@@ -171,12 +171,12 @@ exports.resetPassword = async (req, res) => {
     }
 };
 
-exports.getMe = async (req, res) => {
-  res.json({
-    admin: {
-      id: req.admin._id,
-      name: req.admin.name,
-      email: req.admin.email,
-    },
-  });
-};
+// exports.getMe = async (req, res) => {
+//   res.json({
+//     admin: {
+//       id: req.admin._id,
+//       name: req.admin.name,
+//       email: req.admin.email,
+//     },
+//   });
+// };

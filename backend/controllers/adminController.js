@@ -3,7 +3,8 @@ const jwt = require("jsonwebtoken");
 const Admin = require("../models/admin");
 const { sendPasswordResetEmail } = require("../utils/emailService");
 
-// ================= JWT HELPERS =================
+/* ================= JWT HELPERS ================= */
+
 const generateAuthToken = (adminId) =>
     jwt.sign({ adminId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
@@ -14,8 +15,8 @@ const generateResetToken = (adminId) =>
         { expiresIn: "1h" }
     );
 
+/* ================= REGISTER ================= */
 
-// ================= REGISTER =================
 exports.registerAdmin = async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -30,22 +31,34 @@ exports.registerAdmin = async (req, res) => {
         const admin = await Admin.create({
             name,
             email,
-            password: hashed
+            password: hashed,
         });
 
         const token = generateAuthToken(admin._id);
 
+        // 🔑 SET COOKIE
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+
         res.status(201).json({
             msg: "Admin registered successfully",
-            token
+            admin: {
+                id: admin._id,
+                name: admin.name,
+                email: admin.email,
+            },
         });
     } catch (err) {
         res.status(500).json({ msg: "Server Error" });
     }
 };
 
+/* ================= LOGIN ================= */
 
-// ================= LOGIN =================
 exports.loginAdmin = async (req, res) => {
     const { email, password } = req.body;
 
@@ -62,22 +75,41 @@ exports.loginAdmin = async (req, res) => {
 
         const token = generateAuthToken(admin._id);
 
+        // 🔑 SET COOKIE
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+
         res.json({
             msg: "Login successful",
-            token,
             admin: {
                 id: admin._id,
                 name: admin.name,
-                email: admin.email
-            }
+                email: admin.email,
+            },
         });
     } catch (err) {
         res.status(500).json({ msg: "Server Error" });
     }
 };
 
+/* ================= LOGOUT ================= */
 
-// ================= FORGOT PASSWORD =================
+exports.logoutAdmin = async (req, res) => {
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+    });
+
+    res.json({ msg: "Logged out successfully" });
+};
+
+/* ================= FORGOT PASSWORD ================= */
+
 exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
 
@@ -87,7 +119,6 @@ exports.forgotPassword = async (req, res) => {
             return res.status(404).json({ msg: "Admin not found" });
         }
 
-        // JWT reset token (1 hour expiry)
         const resetToken = generateResetToken(admin._id);
 
         await sendPasswordResetEmail(admin.email, admin.name, resetToken);
@@ -98,8 +129,8 @@ exports.forgotPassword = async (req, res) => {
     }
 };
 
+/* ================= VERIFY RESET TOKEN ================= */
 
-// ================= VERIFY RESET TOKEN =================
 exports.verifyResetToken = async (req, res) => {
     const { token } = req.params;
 
@@ -116,8 +147,8 @@ exports.verifyResetToken = async (req, res) => {
     }
 };
 
+/* ================= RESET PASSWORD ================= */
 
-// ================= RESET PASSWORD =================
 exports.resetPassword = async (req, res) => {
     const { token, newPassword } = req.body;
 
@@ -131,11 +162,21 @@ exports.resetPassword = async (req, res) => {
         const hashed = await bcrypt.hash(newPassword, 10);
 
         await Admin.findByIdAndUpdate(decoded.adminId, {
-            password: hashed
+            password: hashed,
         });
 
         res.json({ msg: "Password reset successful" });
     } catch (err) {
         res.status(400).json({ msg: "Invalid or expired token" });
     }
+};
+
+exports.getMe = async (req, res) => {
+  res.json({
+    admin: {
+      id: req.admin._id,
+      name: req.admin.name,
+      email: req.admin.email,
+    },
+  });
 };

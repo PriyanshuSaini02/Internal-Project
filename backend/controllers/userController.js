@@ -10,6 +10,8 @@ exports.createUser = async (req, res) => {
         name,
         email,
         dob,
+        doj,
+        type,
         project,
         address,
         phoneNumber,
@@ -39,6 +41,8 @@ exports.createUser = async (req, res) => {
             email,
             password: hashedPassword,
             dob,
+            doj,
+            type,
             userManager: req.admin._id,
             project,
             address,
@@ -68,10 +72,10 @@ exports.createUser = async (req, res) => {
     }
 };
 
-// Get all users (Admin only)
+// Get all users (Admin only) - excludes deleted users
 exports.getAllUsers = async (req, res) => {
     try {
-        const users = await User.find({}, '-password').sort({ createdAt: -1 });
+        const users = await User.find({ isDeleted: { $ne: true } }, '-password').sort({ createdAt: -1 });
         res.status(200).json({
             msg: "Users retrieved successfully",
             users: users
@@ -82,10 +86,85 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
+// Get all deleted users (Admin only)
+exports.getDeletedUsers = async (req, res) => {
+    try {
+        const users = await User.find({ isDeleted: true }, '-password').sort({ updatedAt: -1 });
+        res.status(200).json({
+            msg: "Deleted users retrieved successfully",
+            users: users
+        });
+    } catch (err) {
+        console.error('Error getting deleted users:', err);
+        res.status(500).json({ msg: "Server Error" });
+    }
+};
+
+// Search users with filters (Admin only)
+exports.searchUsers = async (req, res) => {
+    try {
+        const { 
+            search = '', 
+            type = '', 
+            includeDeleted = 'false',
+            sortBy = 'createdAt',
+            sortOrder = 'desc'
+        } = req.query;
+        
+        // Build query
+        const query = {};
+        
+        // Handle deleted filter
+        if (includeDeleted === 'true') {
+            query.isDeleted = true;
+        } else {
+            query.isDeleted = { $ne: true };
+        }
+        
+        // Handle type filter
+        if (type && type !== 'all') {
+            query.type = type;
+        }
+        
+        // Handle search term
+        if (search) {
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { userId: { $regex: search, $options: 'i' } },
+                { type: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Build sort object
+        const sortObj = {};
+        const order = sortOrder === 'asc' ? 1 : -1;
+        
+        if (sortBy === 'name') {
+            sortObj.name = order;
+        } else if (sortBy === 'email') {
+            sortObj.email = order;
+        } else {
+            sortObj.createdAt = order;
+        }
+        
+        const users = await User.find(query, '-password').sort(sortObj);
+        
+        res.status(200).json({
+            msg: "Users retrieved successfully",
+            users: users,
+            count: users.length
+        });
+    } catch (err) {
+        console.error('Error searching users:', err);
+        res.status(500).json({ msg: "Server Error" });
+    }
+};
+
 // Get user by ID (Admin only)
 exports.getUserById = async (req, res) => {
     try {
-        const user = await User.findOne({ userId: req.params.id }, '-password');
+        const user = await User.findOne({ userId: req.params.id, isDeleted: { $ne: true } }, '-password');
         if (!user) {
             return res.status(404).json({ msg: "User not found" });
         }
@@ -101,10 +180,10 @@ exports.getUserById = async (req, res) => {
 
 // Update user (Admin only)
 exports.updateUser = async (req, res) => {
-    const { name, email, dob, project, address, phoneNumber } = req.body;
+    const { name, email, dob, doj, type, project, address, phoneNumber } = req.body;
 
     try {
-        const user = await User.findOne({ userId: req.params.id });
+        const user = await User.findOne({ userId: req.params.id, isDeleted: { $ne: true } });
         if (!user) {
             return res.status(404).json({ msg: "User not found" });
         }
@@ -121,6 +200,8 @@ exports.updateUser = async (req, res) => {
         if (name) user.name = name;
         if (email) user.email = email;
         if (dob) user.dob = dob;
+        if (doj) user.doj = doj;
+        if (type) user.type = type;
         if (project) user.project = project;
         if (address) user.address = address;
         if (phoneNumber) user.phoneNumber = phoneNumber;
@@ -134,6 +215,8 @@ exports.updateUser = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 dob: user.dob,
+                doj: user.doj,
+                type: user.type,
                 project: user.project,
                 address: user.address,
                 phoneNumber: user.phoneNumber
@@ -145,33 +228,49 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-// Delete user (Admin only)
+// Delete user (Admin only) - Soft delete only
 exports.deleteUser = async (req, res) => {
     try {
-        const user = await User.findOne({ userId: req.params.id });
+        const user = await User.findOne({ userId: req.params.id, isDeleted: { $ne: true } });
         if (!user) {
             return res.status(404).json({ msg: "User not found" });
         }
 
-        // Delete profile picture if exists (Cloudinary)
-        if (user.profilePicture) {
-            const publicId = extractPublicId(user.profilePicture);
-            if (publicId) {
-                try {
-                    await cloudinary.uploader.destroy(publicId);
-                } catch (err) {
-                    console.warn('Failed to delete existing Cloudinary image', err.message);
-                }
-            }
-        }
-
-        await User.deleteOne({ userId: req.params.id });
+        // Soft delete - mark as deleted instead of removing from database
+        user.isDeleted = true;
+        await user.save();
 
         res.status(200).json({
             msg: "User deleted successfully"
         });
     } catch (err) {
         console.error('Error deleting user:', err);
+        res.status(500).json({ msg: "Server Error" });
+    }
+};
+
+// Restore deleted user (Admin only)
+exports.restoreUser = async (req, res) => {
+    try {
+        const user = await User.findOne({ userId: req.params.id, isDeleted: true });
+        if (!user) {
+            return res.status(404).json({ msg: "Deleted user not found" });
+        }
+
+        // Restore user
+        user.isDeleted = false;
+        await user.save();
+
+        res.status(200).json({
+            msg: "User restored successfully",
+            user: {
+                userId: user.userId,
+                name: user.name,
+                email: user.email
+            }
+        });
+    } catch (err) {
+        console.error('Error restoring user:', err);
         res.status(500).json({ msg: "Server Error" });
     }
 };
@@ -183,7 +282,7 @@ exports.uploadProfilePicture = async (req, res) => {
             return res.status(400).json({ msg: "No file uploaded" });
         }
 
-        const user = await User.findOne({ userId: req.params.id });
+        const user = await User.findOne({ userId: req.params.id, isDeleted: { $ne: true } });
         if (!user) {
             return res.status(404).json({ msg: "User not found" });
         }
@@ -192,7 +291,7 @@ exports.uploadProfilePicture = async (req, res) => {
         const uploadResult = await uploadToCloudinary(req.file.buffer);
 
         // Delete old profile picture if exists
-        if (user.profilePicture) {
+        if (user.profilePicture && user.profilePicture !== 'https://r2.fivemanage.com/CJAMKGHJCaMRCeitL1kKd/default-avatar.png') {
             const oldPublicId = extractPublicId(user.profilePicture);
             if (oldPublicId) {
                 try {
@@ -219,7 +318,7 @@ exports.uploadProfilePicture = async (req, res) => {
 // Get user profile picture
 exports.getProfilePicture = async (req, res) => {
     try {
-        const user = await User.findOne({ userId: req.params.id });
+        const user = await User.findOne({ userId: req.params.id, isDeleted: { $ne: true } });
         if (!user || !user.profilePicture) {
             return res.status(404).json({ msg: "Profile picture not found" });
         }

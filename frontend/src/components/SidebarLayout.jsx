@@ -51,7 +51,7 @@ const SidebarLayout = ({ children }) => {
                 {admin?.name || 'Admin'}
               </div>
               <div className="sidebar__user-email">
-                {admin?.email || ''}
+                {admin?.email.slice(0,20)+"..." || ''}
               </div>
             </div>
           </div>
@@ -72,3 +72,4 @@ const SidebarLayout = ({ children }) => {
 };
 
 export default SidebarLayout;
+

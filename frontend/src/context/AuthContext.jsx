@@ -1,12 +1,12 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { adminAPI } from '../services/api';
+import { createContext, useContext, useState, useEffect } from "react";
+import { adminAPI } from "../services/api";
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -16,26 +16,32 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const adminData = localStorage.getItem('admin');
-    if (token && adminData) {
-      setAdmin(JSON.parse(adminData));
-    }
-    setLoading(false);
+    // 🔑 Check if user is authenticated by calling /api/admin/me
+    const checkAuth = async () => {
+      try {
+        const response = await adminAPI.getMe();
+        setAdmin(response.data.admin);
+      } catch (error) {
+        // Not authenticated or token expired
+        setAdmin(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email, password) => {
     try {
       const response = await adminAPI.login({ email, password });
-      const { token, admin: adminData } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('admin', JSON.stringify(adminData));
+      const { admin: adminData } = response.data;
       setAdmin(adminData);
       return { success: true };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.msg || 'Login failed',
+        error: error.response?.data?.msg || "Login failed",
       };
     }
   };
@@ -43,26 +49,25 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password) => {
     try {
       const response = await adminAPI.register({ name, email, password });
-      const { token } = response.data;
-      localStorage.setItem('token', token);
-      // After registration, login to get admin data
-      const loginResponse = await adminAPI.login({ email, password });
-      const { admin: adminData } = loginResponse.data;
-      localStorage.setItem('admin', JSON.stringify(adminData));
+      const { admin: adminData } = response.data;
       setAdmin(adminData);
       return { success: true };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.msg || 'Registration failed',
+        error: error.response?.data?.msg || "Registration failed",
       };
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('admin');
-    setAdmin(null);
+  const logout = async () => {
+    try {
+      await adminAPI.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setAdmin(null);
+    }
   };
 
   const value = {
@@ -76,4 +81,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

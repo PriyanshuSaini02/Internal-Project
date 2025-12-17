@@ -37,12 +37,10 @@
 
 /* ================= CONTENT ================= */
 .dashboard-content {
-  padding: 26px 32px;
+  padding: 26px 0;
   width: 100%;
   max-width: none;
-  /* 🔑 REMOVE WIDTH CONSTRAINT */
   margin: 0;
-  /* 🔑 REMOVE CENTERING */
   box-sizing: border-box;
 }
 
@@ -52,15 +50,56 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
-.search-bar input {
+.search-bar input[type="text"] {
   flex: 1;
   min-width: 260px;
   padding: 12px 14px;
   border: 1.5px solid #e2e8f0;
   border-radius: 10px;
   font-size: 15px;
+}
+
+.search-bar .ghost {
+  height: 44px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= TYPE FILTER DROPDOWN ================= */
+.type-filter-dropdown {
+  padding: 12px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  background: white;
+  color: #334155;
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.type-filter-dropdown:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* checkbox */
+.checkbox-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 44px;
+  font-size: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 /* ================= TABLE ================= */
@@ -88,12 +127,49 @@
 .users-table th {
   background: #f8fafc;
   font-weight: 700;
-  text-transform: uppercase;
   font-size: 13px;
+  color: #475569;
 }
 
-.users-table tbody tr:hover {
-  background: #f8fafc;
+/* ================= SORTABLE ================= */
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sort-arrow {
+  margin-left: 6px;
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.sort-arrow.active {
+  color: #4338ca;
+  font-weight: bold;
+}
+
+/* ================= DELETED ROW ================= */
+.users-table tr.deleted-row {
+  opacity: 0.65;
+  background: #fef2f2;
+}
+
+/* ================= STATUS BADGE ================= */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.deleted {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 /* ================= PROFILE ================= */
@@ -112,37 +188,57 @@
   color: #94a3b8;
 }
 
-/* ================= ACTIONS ================= */
+/* ================= ACTION ICON BUTTONS ================= */
 .action-buttons {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
-.btn-view,
-.btn-edit,
-.btn-delete {
-  padding: 7px 12px;
+.icon-btn {
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
   border: none;
+  display: grid;
+  place-items: center;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.btn-view {
+.icon-btn.view {
   background: #0ea5e9;
   color: white;
 }
 
-.btn-edit {
+.icon-btn.view:hover {
+  background: #0284c7;
+}
+
+.icon-btn.edit {
   background: #f59e0b;
   color: white;
 }
 
-.btn-delete {
+.icon-btn.edit:hover {
+  background: #d97706;
+}
+
+.icon-btn.delete {
   background: #ef4444;
   color: white;
+}
+
+.icon-btn.delete:hover {
+  background: #dc2626;
+}
+
+.icon-btn.restore {
+  background: #10b981;
+  color: white;
+}
+
+.icon-btn.restore:hover {
+  background: #059669;
 }
 
 /* ================= EMPTY / LOADING ================= */
@@ -164,36 +260,21 @@
   border-radius: 10px;
   border: none;
   font-weight: 600;
-  cursor: pointer;
 }
 
 .btn-secondary.ghost {
-  background: #eef2ff;
-  color: #4338ca;
+  background: #e2e8f0;
+  color: #0f172a;
   border: 1px solid #c7d2fe;
-}
-
-.btn-primary {
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border-radius: 10px;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 /* ================= MOBILE ================= */
 @media (max-width: 768px) {
-  .dashboard-header {
-    padding: 16px 18px;
-  }
-
-  .dashboard-content {
-    padding: 18px;
-  }
-
   .action-buttons {
     flex-direction: column;
+  }
+
+  .type-filter-dropdown {
+    width: 100%;
   }
 }

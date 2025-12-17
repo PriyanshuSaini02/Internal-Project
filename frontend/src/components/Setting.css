@@ -1,0 +1,10 @@
+.setting-row {
+    /* display: flex; */
+    /* text-align: center; */
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    /* space between email block and button */
+    margin-top: 20px;
+    padding: 20px;
+}

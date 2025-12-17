@@ -20,3 +20,4 @@ const Alert = ({ type = 'info', children }) => {
 
 export default Alert;
 
+

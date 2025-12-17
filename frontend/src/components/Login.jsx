@@ -1,34 +1,43 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Alert from './ui/Alert';
-import Spinner from './ui/Spinner';
-import './Auth.css';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import Spinner from "./ui/Spinner";
+import Toast from "./ui/Toast";
+import "./Auth.css";
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+
+  // 🔔 toast state
+  const [toast, setToast] = useState(null);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const showToast = (type, message) => {
+    setToast({ type, message });
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value.trimStart() });
-    setError('');
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value.trimStart(),
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     const result = await login(formData.email, formData.password);
     setLoading(false);
 
     if (result.success) {
-      navigate('/dashboard');
+      showToast("success", "Login successful");
+      setTimeout(() => navigate("/dashboard"), 300);
     } else {
-      setError(result.error);
+      showToast("error", result.error || "Invalid credentials");
     }
   };
 
@@ -36,6 +45,7 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Admin Login</h2>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -50,6 +60,7 @@ const Login = () => {
               autoComplete="email"
             />
           </div>
+
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
@@ -63,24 +74,33 @@ const Login = () => {
               autoComplete="current-password"
             />
           </div>
-          {error && <Alert type="error">{error}</Alert>}
+
           <button
             type="submit"
             className="btn-primary"
             disabled={loading || !formData.email || !formData.password}
           >
-            {loading ? <Spinner label="Logging in..." /> : 'Login'}
+            {loading ? <Spinner label="Logging in..." /> : "Login"}
           </button>
         </form>
+
         <div className="auth-links">
           <Link to="/forgot-password">Forgot Password?</Link>
           <span> | </span>
           <Link to="/register">Don't have an account? Register</Link>
         </div>
       </div>
+
+      {/* 🔔 Toast */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
 
 export default Login;
-

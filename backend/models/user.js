@@ -27,6 +27,13 @@ const userSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    doj: {
+        type: Date,
+        required: true
+    },
+    type: {
+        type: String
+    },
     userManager: {
         type: String,
         required: true
@@ -45,7 +52,11 @@ const userSchema = new mongoose.Schema({
     },
     profilePicture: {
         type: String,
-        default: '/uploads/default-avatar.png' || null
+        default: 'https://r2.fivemanage.com/CJAMKGHJCaMRCeitL1kKd/default-avatar.png' || null
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

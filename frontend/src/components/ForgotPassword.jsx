@@ -1,23 +1,26 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { adminAPI } from '../services/api';
-import Alert from './ui/Alert';
-import Spinner from './ui/Spinner';
-import './Auth.css';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { adminAPI } from "../services/api";
+import Spinner from "./ui/Spinner";
+import Toast from "./ui/Toast";
+import "./Auth.css";
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // 🔔 toast state
+  const [toast, setToast] = useState(null);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
 
     if (!email) {
-      setError('Please enter your email address');
+      showToast("error", "Please enter your email address");
       return;
     }
 
@@ -25,10 +28,16 @@ const ForgotPassword = () => {
 
     try {
       await adminAPI.forgotPassword({ email: email.trim() });
-      setMessage('Password reset email sent! Please check your inbox.');
-      setEmail('');
+      showToast(
+        "success",
+        "Password reset email sent! Please check your inbox."
+      );
+      setEmail("");
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to send reset email');
+      showToast(
+        "error",
+        err.response?.data?.msg || "Failed to send reset email"
+      );
     } finally {
       setLoading(false);
     }
@@ -38,6 +47,7 @@ const ForgotPassword = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Forgot Password</h2>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="email">Email</label>
@@ -52,23 +62,31 @@ const ForgotPassword = () => {
               autoComplete="email"
             />
           </div>
-          {error && <Alert type="error">{error}</Alert>}
-          {message && <Alert type="success">{message}</Alert>}
+
           <button
             type="submit"
             className="btn-primary"
             disabled={loading || !email}
           >
-            {loading ? <Spinner label="Sending..." /> : 'Send Reset Link'}
+            {loading ? <Spinner label="Sending..." /> : "Send Reset Link"}
           </button>
         </form>
+
         <div className="auth-links">
           <Link to="/login">Back to Login</Link>
         </div>
       </div>
+
+      {/* 🔔 Toast */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
 
 export default ForgotPassword;
-

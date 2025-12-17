@@ -1,18 +1,25 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { userAPI } from '../services/api';
-import Alert from './ui/Alert';
-import Spinner from './ui/Spinner';
-import './UserDetails.css';
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { userAPI } from "../services/api";
+import Spinner from "./ui/Spinner";
+import Toast from "./ui/Toast";
+import "./UserDetails.css";
 
 const UserDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState('');
+
+  // 🔔 toast state
+  const [toast, setToast] = useState(null);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+  };
 
   useEffect(() => {
     fetchUser();
@@ -23,9 +30,8 @@ const UserDetails = () => {
       setLoading(true);
       const response = await userAPI.getById(id);
       setUser(response.data.user);
-      setError('');
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to fetch user');
+      showToast("error", err.response?.data?.msg || "Failed to fetch user");
     } finally {
       setLoading(false);
     }
@@ -35,41 +41,44 @@ const UserDetails = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      showToast("error", "Please select an image file");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File size should be less than 5MB');
+      showToast("error", "File size should be less than 5MB");
       return;
     }
 
     try {
       setUploading(true);
-      setUploadError('');
       await userAPI.uploadProfilePicture(id, file);
-      fetchUser(); // Refresh user data
+      showToast("success", "Profile picture updated");
+      fetchUser();
     } catch (err) {
-      setUploadError(err.response?.data?.msg || 'Failed to upload profile picture');
+      showToast(
+        "error",
+        err.response?.data?.msg || "Failed to upload profile picture"
+      );
     } finally {
       setUploading(false);
-      e.target.value = ''; // Reset file input
+      e.target.value = "";
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const getProfileImageUrl = (profilePicture) => {
     if (!profilePicture) return null;
-    if (profilePicture.startsWith('http')) return profilePicture;
+    if (profilePicture.startsWith("http")) return profilePicture;
     return `http://localhost:5000${profilePicture}`;
   };
 
@@ -81,13 +90,20 @@ const UserDetails = () => {
     );
   }
 
-  if (error || !user) {
+  if (!user) {
     return (
       <div className="user-details-container">
-        <Alert type="error">{error || 'User not found'}</Alert>
-        <button className="btn-primary" onClick={() => navigate('/dashboard')}>
+        <button className="btn-primary" onClick={() => navigate("/dashboard")}>
           Back to Dashboard
         </button>
+
+        {toast && (
+          <Toast
+            type={toast.type}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        )}
       </div>
     );
   }
@@ -97,7 +113,10 @@ const UserDetails = () => {
       <div className="user-details-card">
         <div className="details-header">
           <h2>User Details</h2>
-          <button className="btn-secondary" onClick={() => navigate('/dashboard')}>
+          <button
+            className="btn-secondary"
+            onClick={() => navigate("/dashboard")}
+          >
             Back to Dashboard
           </button>
         </div>
@@ -111,25 +130,28 @@ const UserDetails = () => {
                   alt={user.name}
                   className="profile-picture"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/200';
+                    e.target.src = "https://via.placeholder.com/200";
                   }}
                 />
               ) : (
-                <div className="profile-placeholder-large">No Profile Picture</div>
+                <div className="profile-placeholder-large">
+                  No Profile Picture
+                </div>
               )}
+
               <div className="upload-section">
                 <label htmlFor="profile-upload" className="btn-upload">
-                  {uploading ? 'Uploading...' : 'Upload Profile Picture'}
+                  {uploading ? "Uploading..." : "Upload Profile Picture"}
                 </label>
+
                 <input
                   type="file"
                   id="profile-upload"
                   accept="image/*"
                   onChange={handleFileUpload}
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                   disabled={uploading}
                 />
-                {uploadError && <Alert type="error">{uploadError}</Alert>}
               </div>
             </div>
           </div>
@@ -151,27 +173,47 @@ const UserDetails = () => {
             </div>
 
             <div className="detail-item">
+              <label>Type</label>
+              <p>
+                <span
+                  className={`type-badge ${
+                    user.type
+                      ? user.type.toLowerCase().replace("-", "")
+                      : "unknown"
+                  }`}
+                >
+                  {user.type || "N/A"}
+                </span>
+              </p>
+            </div>
+
+            <div className="detail-item">
               <label>Date of Birth</label>
               <p>{formatDate(user.dob)}</p>
             </div>
 
             <div className="detail-item">
+              <label>Date of Joining</label>
+              <p>{formatDate(user.doj)}</p>
+            </div>
+
+            <div className="detail-item">
               <label>Phone Number</label>
-              <p>{user.phoneNumber || 'N/A'}</p>
+              <p>{user.phoneNumber || "N/A"}</p>
             </div>
 
             <div className="detail-item">
               <label>Projects</label>
               <p>
                 {user.project && user.project.length > 0
-                  ? user.project.join(', ')
-                  : 'N/A'}
+                  ? user.project.join(", ")
+                  : "N/A"}
               </p>
             </div>
 
             <div className="detail-item">
               <label>Address</label>
-              <p>{user.address || 'N/A'}</p>
+              <p>{user.address || "N/A"}</p>
             </div>
 
             <div className="detail-item">
@@ -190,9 +232,17 @@ const UserDetails = () => {
           </button>
         </div>
       </div>
+
+      {/* 🔔 Toast */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
 
 export default UserDetails;
-

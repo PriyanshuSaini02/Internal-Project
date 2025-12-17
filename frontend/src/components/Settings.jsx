@@ -1,33 +1,41 @@
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { adminAPI } from '../services/api';
-import Alert from './ui/Alert';
-import Spinner from './ui/Spinner';
-import './Layout.css';
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { adminAPI } from "../services/api";
+import Spinner from "./ui/Spinner";
+import Toast from "./ui/Toast";
+import "./Layout.css";
+import "./Setting.css";
 
 const Settings = () => {
   const { admin } = useAuth();
-  const [status, setStatus] = useState({ type: '', message: '' });
   const [loading, setLoading] = useState(false);
+
+  // 🔔 toast state
+  const [toast, setToast] = useState(null);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+  };
 
   const sendResetLink = async () => {
     if (!admin?.email) {
-      setStatus({ type: 'error', message: 'No admin email available.' });
+      showToast("error", "No admin email available.");
       return;
     }
+
     setLoading(true);
-    setStatus({ type: '', message: '' });
+
     try {
       await adminAPI.forgotPassword({ email: admin.email });
-      setStatus({
-        type: 'success',
-        message: 'Reset link sent to your email. Please check your inbox.',
-      });
+      showToast(
+        "success",
+        "Reset link sent to your email. Please check your inbox."
+      );
     } catch (err) {
-      setStatus({
-        type: 'error',
-        message: err.response?.data?.msg || 'Failed to send reset link.',
-      });
+      showToast(
+        "error",
+        err.response?.data?.msg || "Failed to send reset link."
+      );
     } finally {
       setLoading(false);
     }
@@ -50,24 +58,33 @@ const Settings = () => {
         <p className="panel__subtitle">
           We’ll email a secure link to reset your password.
         </p>
+
         <div className="setting-row">
           <div>
             <div className="label">Email</div>
-            <div className="value">{admin?.email || 'Not available'}</div>
+            <div className="value">{admin?.email || "Not available"}</div>
           </div>
+
           <button
             className="btn-primary"
             onClick={sendResetLink}
             disabled={loading}
           >
-            {loading ? <Spinner label="Sending..." /> : 'Send reset link'}
+            {loading ? <Spinner label="Sending..." /> : "Send reset link"}
           </button>
         </div>
-        {status.message && <Alert type={status.type}>{status.message}</Alert>}
       </div>
+
+      {/* 🔔 Toast */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
 
 export default Settings;
-

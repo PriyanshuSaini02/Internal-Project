@@ -1,21 +1,28 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import { adminAPI } from '../services/api';
-import Alert from './ui/Alert';
-import Spinner from './ui/Spinner';
-import './Auth.css';
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { adminAPI } from "../services/api";
+import Spinner from "./ui/Spinner";
+import Toast from "./ui/Toast";
+import "./Auth.css";
 
 const ResetPassword = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    newPassword: '',
-    confirmPassword: '',
+    newPassword: "",
+    confirmPassword: "",
   });
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [tokenValid, setTokenValid] = useState(null);
+
+  // 🔔 toast state
+  const [toast, setToast] = useState(null);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+  };
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -24,9 +31,10 @@ const ResetPassword = () => {
         setTokenValid(true);
       } catch (err) {
         setTokenValid(false);
-        setError('Invalid or expired reset token');
+        showToast("error", "Invalid or expired reset token");
       }
     };
+
     if (token) {
       verifyToken();
     }
@@ -34,21 +42,18 @@ const ResetPassword = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      showToast("error", "Passwords do not match");
       return;
     }
 
     if (formData.newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
+      showToast("error", "Password must be at least 8 characters long");
       return;
     }
 
@@ -58,16 +63,17 @@ const ResetPassword = () => {
         token,
         newPassword: formData.newPassword,
       });
-      setMessage('Password reset successful! Redirecting to login...');
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+
+      showToast("success", "Password reset successful. Redirecting...");
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to reset password');
+      showToast("error", err.response?.data?.msg || "Failed to reset password");
     } finally {
       setLoading(false);
     }
   };
+
+  /* ================= TOKEN VERIFY STATES ================= */
 
   if (tokenValid === null) {
     return (
@@ -84,12 +90,20 @@ const ResetPassword = () => {
       <div className="auth-container">
         <div className="auth-card">
           <h2>Reset Password</h2>
-          {error && <Alert type="error">{error}</Alert>}
+
           <div className="auth-links">
             <Link to="/forgot-password">Request new reset link</Link>
             <span> | </span>
             <Link to="/login">Back to Login</Link>
           </div>
+
+          {toast && (
+            <Toast
+              type={toast.type}
+              message={toast.message}
+              onClose={() => setToast(null)}
+            />
+          )}
         </div>
       </div>
     );
@@ -99,6 +113,7 @@ const ResetPassword = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Reset Password</h2>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="newPassword">New Password</label>
@@ -113,6 +128,7 @@ const ResetPassword = () => {
               minLength={8}
             />
           </div>
+
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm Password</label>
             <input
@@ -125,27 +141,33 @@ const ResetPassword = () => {
               placeholder="Confirm new password"
             />
           </div>
-          {error && <Alert type="error">{error}</Alert>}
-          {message && <Alert type="success">{message}</Alert>}
+
           <button
             type="submit"
             className="btn-primary"
             disabled={
-              loading ||
-              !formData.newPassword ||
-              !formData.confirmPassword
+              loading || !formData.newPassword || !formData.confirmPassword
             }
           >
-            {loading ? <Spinner label="Resetting..." /> : 'Reset Password'}
+            {loading ? <Spinner label="Resetting..." /> : "Reset Password"}
           </button>
         </form>
+
         <div className="auth-links">
           <Link to="/login">Back to Login</Link>
         </div>
       </div>
+
+      {/* 🔔 Toast */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
 
 export default ResetPassword;
-

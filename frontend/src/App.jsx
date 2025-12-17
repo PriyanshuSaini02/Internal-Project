@@ -7,7 +7,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
-import Dashboard from './components/Dashboard';
+import Dashboard from './components/Dashboard/Dashboard';
 import UserForm from './components/UserForm';
 import UserDetails from './components/UserDetails';
 import Settings from './components/Settings';
